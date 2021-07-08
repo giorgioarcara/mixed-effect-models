@@ -12,7 +12,7 @@ summary(mod1.lm)
  
 #acf_resid(mod.lm, split_pred = "PrimeType")
 png("Figures/ex1_mod_lm.png", height=1600, width=1800, res=200)
-plot(allEffects(mod.lm))
+plot(allEffects(mod1.lm))
 dev.off()
 
 
@@ -53,8 +53,21 @@ dev.off()
 mod.lmer2 = lmer(RT ~ StimType*PrimeType + Imageability + Complexity +
                   (1 + StimType| Subj_ID) + (1 | Item_ID),
                 data=dat)
+
 summary(mod.lmer2)
 plot(allEffects(mod.lmer2))
+
+
+##### MODEL WITH RANDOM SLOPES
+mod.lmer2a = lmer(RT ~ StimType*PrimeType + Imageability + Complexity +
+                   (1 | Subj_ID) + (0 + StimType| Subj_ID) + (1 | Item_ID),
+                 data=dat)
+
+summary(mod.lmer2a)
+plot(allEffects(mod.lmer2))
+
+
+ranef(mod.lmer2)
 
 png("Figures/ex1_mod_lmer2.png", height=1600, width=1800, res=200)
 plot(allEffects(mod.lmer2))

@@ -54,7 +54,7 @@ dev.off()
 
 ## MULTIPLE LINEAR REGRESSION WITH FACTORS ##
 PrimeType = rep(c("Positive", "Negative"), each=50)
-Complexity = factor(Complexity)
+PrimeType = factor(PrimeType)
 PrimeType_dummy = model.matrix( ~ PrimeType )[,2]
 Imageability = rnorm(100, mean = 20, sd = 5)
 Error = rnorm(100, mean=0, sd = 8)
@@ -161,9 +161,6 @@ png("Figures/diagn_5.png", height=800, width=800, res=200)
 acf(resid(mod2)) 
 dev.off()
 # this check make sense assuming an autocorrelation, that is the dependency is related to the order in the data.frame
-
-
-
 
 
 

@@ -14,7 +14,7 @@
 # 
 # There is some concern that Interpretability and Concreteness may be highly correlated (issues of collinearity?)
 # Moroever according to some recent papers effect of Interpretability may vary across the different stimulus type.
-# There could also be some effect of fatigue during the experiment, that could be taken into account using Ntrial as a covraiate.
+# There could also be some effect of fatigue during the experiment, that could be taken into account using Ntrial as a covariate
 #
 load("data/example2_dat.RData")
 

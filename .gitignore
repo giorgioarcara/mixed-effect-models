@@ -3,4 +3,4 @@
 .RData
 .Ruserdata
 .DS_Store
-/Mixed_Models_R_project/R_code/Simulate_Mixed_Model_data/*
+#/Mixed_Models_R_project/R_code/Simulate_Mixed_Model_data/*

@@ -13,7 +13,7 @@
 # - Concreteness
 #
 # To add some realisms. Let's hypotesize that according to some recent results from another study,
-# Imageability may play a role in 
+# Imageability may play a different role depending on stimulus type (higher for metaphors)
 
 
 rm(list=ls())
@@ -30,6 +30,9 @@ load("data/example1_dat.RData")
 str(dat)
 head(dat)
 summary(dat)
+
+dat$PrimeType=factor(dat$PrimeType)
+dat$StimType=factor(dat$StimType)
 
 # I order the data here to be sure data are ordered
 dat = dat[order(dat$Subj_ID, dat$Ntrial), ]
@@ -55,6 +58,7 @@ vif(dat.lmer0)
 # we will consider this in the interpretation of the results.
 # moreveor there were some issues in model convergence, maybe the random structure is too complex.
  d# Now fit only a model with Imageability, contrasting two possible random structure
+ 
 dat.lmer1 = lmer(RT~StimType*PrimeType + Imageability + Complexity + (1+StimType*PrimeType|Subj_ID) + (1|Item_ID), data=dat)
 dat.lmer2 = lmer(RT~StimType*PrimeType + Imageability + Complexity + (1+StimType|Subj_ID) + (1|Item_ID), data=dat)
 anova(dat.lmer1, dat.lmer2)
@@ -62,6 +66,7 @@ anova(dat.lmer1, dat.lmer2)
 #
 # finally I check whether a model including an interaction with Imageability
 dat.lmer3 = lmer(RT~StimType*PrimeType + StimType*Imageability + Complexity + (1+StimType*PrimeType|Subj_ID) + (1|Item_ID), data=dat)
+Anova(dat.lmer3, type="III")
 anova(dat.lmer1, dat.lmer3) # I can use Anova cause they are nested
 # The anova is not significant so I will keep the simpler model: there is no evidence of relevant interaction between StimType and PrimeType
 
@@ -88,7 +93,6 @@ plot(allEffects(dat.lmer1, partial.residuals=T))
 # (note that I ordered before according to Ntrial, to be sure)
 
 # The figure is very large so I generate it externally
-
 png("Figures/acf_resid_ex1.png", height=400*5, width=400*4, res=180)
 Subjects = unique(dat$Subj_ID)
 
@@ -100,10 +104,15 @@ for (iS in Subjects){
 dev.off()
 # in no case there are problems in autocorrelation
 
-####
+########
 # as the model seems solid, I can make some additional steps, like post hocs or figures
-pairs(emmeans(dat.lmer1, ~StimType*PrimeType))
+####
 
+Anova(dat.lmer1) # to inspect significance of terms
+pairs(emmeans(dat.lmer1, ~StimType*PrimeType)) # for post-hocs
+# As there is no interaction with linear terms there is no need to post-hoc for marginal effects.
+
+# here a plot of all marginal effects
 plot(allEffects(dat.lmer1))
 
 
