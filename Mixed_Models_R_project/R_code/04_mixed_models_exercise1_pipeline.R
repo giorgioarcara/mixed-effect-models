@@ -12,7 +12,7 @@
 # - Complexity
 # - Concreteness
 #
-# To add some realisms. Let's hypotesize that according to some recent results from another study,
+# To add some realism. Let's hypotesize that according to some recent results from another study,
 # Imageability may play a different role depending on stimulus type (higher for metaphors)
 
 
@@ -85,7 +85,7 @@ abline(h=0, col="red", lty=2)
 # no  issues here
 
 # 3) check linearity from partial residuals
-plot(allEffects(dat.lmer1, partial.residuals=T))
+plot(allEffects(dat.lmer1, partial.residuals=T, cex=0.05))
 #no signs of missed non linearities
 
 # 4) independence of residuals
@@ -103,6 +103,8 @@ for (iS in Subjects){
 
 dev.off()
 # in no case there are problems in autocorrelation
+
+
 
 ########
 # as the model seems solid, I can make some additional steps, like post hocs or figures

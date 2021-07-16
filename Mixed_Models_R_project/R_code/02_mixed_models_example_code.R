@@ -3,11 +3,24 @@ load("data/example1_dat.RData")
 library(lmerTest)
 library(effects)
 library(car)
+library(emmeans)
+
+# the following code refers to an hypothetical experiment with 20 subjects and 200 stimuli 
+# (100 Metaphors and 100 Literal sentences). Stimuli are presented in two Stimulus tyopes (StimeType=Metaphor, StimType=Literal), 
+# and two Priming type (PrimeType=egative and PrimeType=Positive).
+# due to a mistakes in the simulation, the number of combination of PrimeType and StimulusType is not 50 per combination, but slightly different.
 
 
-mod1.lm = lm(RT ~ StimType*PrimeType + Imageability + Complexity,
+
+
+mod1.lm = lm(RT ~ StimType*PrimeType+Imageability+Complexity,
                      data=dat)
 summary(mod1.lm)
+
+Anova(mod1.lm, type="III")
+
+pairs(emmeans(mod1.lm, ~StimType*PrimeType))
+
 
  
 #acf_resid(mod.lm, split_pred = "PrimeType")
@@ -24,13 +37,18 @@ png("Figures/ByItem_Boxplot.png", height=1600, width=3000, res=200)
 boxplot(RT~Item_ID, dat[dat$Item_ID<50,])
 dev.off()
 
-
+library(lme4)
  
 mod.lmer1 = lmer(RT ~ StimType*PrimeType + Imageability + Complexity +
                   (1 | Subj_ID) + (1 | Item_ID),
 data=dat)
+
+
 summary(mod.lmer1)
 plot(allEffects(mod.lmer1))
+
+library(lattice)
+xyplot(RT~Imageability|Subj_ID, dat)
 
 
 ### visualize potential relevance of random slopes
@@ -60,11 +78,11 @@ plot(allEffects(mod.lmer2))
 
 ##### MODEL WITH RANDOM SLOPES
 mod.lmer2a = lmer(RT ~ StimType*PrimeType + Imageability + Complexity +
-                   (1 | Subj_ID) + (0 + StimType| Subj_ID) + (1 | Item_ID),
+                    (1 + Imageability |Subj_ID) + (1 | Item_ID),
                  data=dat)
 
 summary(mod.lmer2a)
-plot(allEffects(mod.lmer2))
+plot(allEffects(mod.lmer2a))
 
 
 ranef(mod.lmer2)
@@ -96,8 +114,8 @@ plot(allEffects(mod.lmer4))
 dev.off()
 
 
-mod.lmer5 = lmer(RT ~ StimType*PrimeType + Imageability + Complexity +
-                   (1 + StimType*Imageability| Subj_ID) + (1 | Item_ID),
+mod.lmer5 = lmer(RT ~ StimType*PrimeType*Imageability + Complexity +
+                   (1 + StimType*PrimeType*Imageability | Subj_ID) + (1 | Item_ID),
                  data=dat)
 summary(mod.lmer5)
 plot(allEffects(mod.lmer5))

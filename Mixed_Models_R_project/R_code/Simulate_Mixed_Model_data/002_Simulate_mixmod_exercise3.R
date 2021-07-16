@@ -2,7 +2,7 @@ rm(list=ls())
 library(lmerTest)
 library(faux)
 library(effects)
-set.seed(102)
+set.seed(140)
 
 ##########################
 # SIMULATE MIXED MODEL DATA
@@ -11,7 +11,7 @@ set.seed(102)
 # date: 07/2021
 # This script contain some code to simulate data for mixed model
 # I strongly based the code by the simulation by Lisa de Bruine (https://debruine.github.io/tutorials/sim-lmer.html),
-# and by some lessons by Harald Baayen. Blame on me for all the mistakes.
+# and by some lessons by Harald Baayen. Blame on my for all the mistakes.
 
 
 #########################
@@ -23,18 +23,18 @@ set.seed(102)
 # here for example I have two factors F1 and F2 with two levels each 
 # so I put all the combinations in just one factor.
 
-Cond_labels = c("F11_F21", "F12_F21", "F11_F22", "F12_F22")
+Cond_labels = c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature", "Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")
 
 # here the effect at population levels
-Cond_effs = c(0, -50, 0, -20)
+Cond_effs = c(0, +50, +80, +20, +70, +180)
 
 Cond_adj = data.frame(Cond_labels, Cond_effs)
 
 # other relevant value to define final formula
-Grand_Intercept = 600
+Grand_Intercept = 1700
 
 # sigma
-mod_sigma = 20
+mod_sigma = 50
 
 Dep_name = "RT"
 
@@ -44,22 +44,22 @@ Dep_name = "RT"
 # PART1 - SUBJECTS ######
 #########################
 # Define parameters of subjects, and subject-specific slopes
-Subj_n = 20 # number of subjects
+Subj_n = 30 # number of subjects
 
 Subj_ID = 1:Subj_n
 
 Subj_sd = 100 # the Subject random intercept (NOTE: it is an sd)
 
 ## add random slope here with no correlation with intercept
-Subj_effsd = c(100, 100, 100) # note it is an sd
-vars_cor = c(0.3) # correlations for RIntercept and Rslope
+Subj_effsd = c(100, 100, 80, 100, 100) # note it is an sd
+vars_cor = c(0.4) # correlations for RIntercept and Rslope
 vars_n = 1+length(Subj_effsd) # Rand Intercept + Rand Slopes
 Subj_adj = rnorm_multi(n=Subj_n, mu=0, r =vars_cor, 
                         sd = c(Subj_sd, Subj_effsd), varnames = c("Subj_rInt", Cond_labels[-1]))
 
 # check that it worked
 cor(Subj_adj)
-hist(Subj_adj$F12_F21)
+hist(Subj_adj$Schizophrenics_Explicature)
 
 
 Subj_adj = cbind(Subj_ID, Subj_adj)
@@ -77,32 +77,37 @@ row.names(Subj_Cond_adj)=1:dim(Subj_Cond_adj)[1]
 Subj_Cond_adj$Subj_rInt_adj = NULL # delete the column with Random Intercept, to avoid confusion
 
 
+## add some variables to items (not interacting with anything)
+Subj_adj$Age = rnorm(Subj_n, mean = 60, sd = 10)
+Subj_adj$Age_adj = Subj_adj$Age * (-0.5)
+
+Subj_adj$TOM = rnorm(Subj_n, mean = 3, sd = 1.5)
+Subj_adj$TOM_adj = Subj_adj$TOM * 30
+
+
 # get random intercept here
-Subj_rInt_adj = Subj_adj[, c("Subj_ID", "Subj_rInt")]  
+Subj_rInt_adj = Subj_adj[, c("Subj_ID", "Subj_rInt", "Age", "Age_adj", "TOM", "TOM_adj")]  
 
 
 ##########################
 # PART2 - ITEMS  ########
 #########################
 # Define parameters of Items, currently without Item-specific slopes
-Item_n = 200 # number of Total Items 
-Item_sd = 100
+Item_n = 10 # number of Total Items  (20 stim for condition)
+Item_sd = 80
 Item_ID = 1:Item_n
 Item_adj =  data.frame(Item_ID , 
                             Item_rInt = rnorm(Item_n, mean=0, sd=Item_sd)
 )
 
-## add some variables to items (not interacting with anything)
-Item_adj$Complexity = rnorm(Item_n, mean = 80, sd = 10)
-Item_adj$Complexity_adj = Item_adj$Complexity * 0
 
-Item_adj$Imageability = rnorm(Item_n, mean = 3, sd = 1)
-Item_adj$Imageability_adj = -Item_adj$Imageability * 80
+## simulate two moderate correlated variabls 
+Item_adj$Interpretability = rnorm(Item_n, mean=10, sd = 3)
+Item_adj$Interpretability_adj = Item_adj$Interpretability* -3
+Item_adj$Interpretability_adj[6:10] = Item_adj$Interpretability[6:10]*-60
+# note that I choose these items cause few lines below I will define these are items for Proverbs (easy and hard)
 
-## simulate two highly correlated variabls 
-Item_adj$Concreteness = Item_adj$Imageability + rnorm(length( Item_adj$Imageability), mean=0, sd = 0.1)
-cor(Item_adj$Concreteness, Item_adj$Imageability)
-Item_adj$Concreteness_adj =  -Item_adj$Concreteness * 60
+
 
 
 ####################################
@@ -115,11 +120,16 @@ dat_skeleton = expand.grid(Subj_ID = Subj_ID, Item_ID = Item_ID, Condition = Con
 # for example, I want Item from 1:100 are associated to F11, while Item from 101:200 to F12
 # all Items are associated to F2.
 # to do this, I remove the non relevant combination here.
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(1:100)&dat_skeleton$Condition%in%c("F12_F21", "F12_F22")), ]
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(101:200)&dat_skeleton$Condition%in%c("F11_F21", "F11_F22")), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(1:5) & dat_skeleton$Condition%in%c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature")), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(6:10) & dat_skeleton$Condition%in%c("Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")), ]
+
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(1:10) & dat_skeleton$Condition%in%c("Schizophrenics_Explicature", "Alzheimer_Explicature","Schizophrenics_Implicature", "Alzheimer_Implicature" )), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(11:20) & dat_skeleton$Condition%in%c("Controls_Explicature", "Alzheimer_Explicature","Controls_Implicature", "Alzheimer_Implicature" )), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(21:30) & dat_skeleton$Condition%in%c("Controls_Explicature", "Schizophrenics_Explicature","Controls_Implicature", "Schizophrenics_Implicature" )), ]
+
 
 table(dat_skeleton$Item_ID, dat_skeleton$Subj_ID)
-
+table(dat_skeleton$Condition, dat_skeleton$Subj_ID)
 
 # add condition effects
 dat_skeleton = merge(dat_skeleton, Cond_adj, by.x=c("Condition"), by.y="Cond_labels")
@@ -150,68 +160,82 @@ for (iS in Subjects){
   
 }
 
+dat_skeleton$Ntrial_adj = 0.0005*dat_skeleton$Ntrial
+
+
 
 
 # ADD DEPENDENT VARIABLE (combining everything)
 dat_skeleton[, Dep_name] = apply(dat_skeleton[, c("Grand_Intercept", "Cond_effs", "Subj_rInt",
                                                   "SubjCond_adj", "Item_rInt", 
-                                                  "Complexity_adj", "Imageability_adj", "Concreteness_adj",
+                                                  "TOM_adj", "Age_adj", "Interpretability_adj", "Ntrial_adj",
                                                   "Error")], 1, sum)
 head(dat_skeleton)
 
 hist(dat_skeleton$RT)
 
-mod1 = lmer(RT~Condition+Imageability+Complexity+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+mod1 = lmer(RT~Condition+Interpretability+TOM+Age+Ntrial+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+library(car)
+vif(mod1)
 plot(allEffects(mod1))
 summary(mod1)
 
+mod2 = lmer(RT~Condition*Interpretability+TOM+Age+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
 
-#mod2 = lmer(RT~Condition+Imageability+Complexity+(1+Condition|Subj_ID) + (1|Item_ID), data=dat_skeleton)
-#summary(mod2)
+summary(mod2)
+
+
 
 # check correspondence of estimates with model 2
 #plot(Subj_Cond_adj$SubjCond_adj[1:20], ranef(mod2)$Subj_ID$ConditionF11_F22)
 #plot(Subj_rInt_adj$Subj_rInt, ranef(mod2)$Subj_ID[["(Intercept)"]])
 
 # createa dataset 
+dat_skeleton$Group=NA
+dat_skeleton[grep("Controls", dat_skeleton$Condition), "Group"]="Controls"
+dat_skeleton[grep("Schizophrenics", dat_skeleton$Condition), "Group"]="Schizophrenics"
+dat_skeleton[grep("Alzheimer", dat_skeleton$Condition), "Group"]="Alzheimer"
+
 dat_skeleton$StimType=NA
-dat_skeleton[grep("F11", dat_skeleton$Condition), "StimType"]="Metaphor"
-dat_skeleton[grep("F12", dat_skeleton$Condition), "StimType"]="Literal"
-dat_skeleton$PrimeType=NA
-dat_skeleton[grep("F21", dat_skeleton$Condition), "PrimeType"]="Positive"
-dat_skeleton[grep("F22", dat_skeleton$Condition), "PrimeType"]="Negative"
+dat_skeleton[grep("Explicature", dat_skeleton$Condition), "StimType"]="Explicature"
+dat_skeleton[grep("Implicature", dat_skeleton$Condition), "StimType"]="Implicature"
 
 
 table(dat_skeleton$StimType, dat_skeleton$Condition)
-table(dat_skeleton$PrimeType, dat_skeleton$Condition)
+table(dat_skeleton$Difficulty, dat_skeleton$Condition)
 
-dat = dat_skeleton[, c("Subj_ID", "Item_ID", "Complexity", "Imageability", "Concreteness", "PrimeType", "StimType", "Ntrial", "RT")]
-# reorder data
-dat=dat[order(dat$Subj_ID, dat$Ntrial),]
-
-dat$Subj_ID = factor(dat$Subj_ID)
-dat$Item_ID = factor(dat$Item_ID)
+dat = dat_skeleton[, c("Subj_ID", "Item_ID", "TOM", "Interpretability", "Age", "Group", "StimType", "Ntrial", "RT")]
+dat$Subj_ID=factor(dat$Subj_ID)
+dat$Item_ID=factor(dat$Item_ID)
 dat$StimType = factor(dat$StimType)
-dat$PrimeType = factor(dat$PrimeType)
+dat$Group = factor(dat$Group)
+
+save(dat, file="data/example3_dat.RData")
 
 
-### to simulate a simple binomial distribution I create (by subjects) ##
-## that data above the 60 percent are = 0, and data below 40 percet are = 1
-# all the others are randomly assigned to either 1 or 0.
+
+mod2 = lmer(RT~StimType*Group+ StimType*Interpretability+TOM+Age+(1+StimType*Group|Subj_ID) + (1|Item_ID), data=dat)
+summary(mod2)
+
+plot(allEffects(mod2))
+plot(effect(mod2, term="StimType*Interpretability"))
+
 
 dat_bin = dat
 dat_bin$ACC = NA
 for (iS in Subjects){
-  perc_low = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.35)
-  perc_up = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.75)
+  perc_low = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.40)
+  perc_up = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.60)
   dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"]<=perc_low] = 1
   dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"] > perc_up] = 0
   dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"]), replace=T)
 }
 table(dat_bin$ACC, dat_bin$Subj_ID, useNA="ifany")
 
-save(dat,file="data/example1_dat.RData")
-save(dat_bin, file="data/example1bin_dat.RData")
 
+mod2.glmer = glmer(ACC~StimType*Group+(1|Subj_ID)+(1|Item_ID), data=dat_bin, family="binomial")
+
+
+save(dat_bin, file="data/example3bin_dat.RData")
 
 

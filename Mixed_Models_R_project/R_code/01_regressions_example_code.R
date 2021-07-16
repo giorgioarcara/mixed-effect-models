@@ -4,20 +4,31 @@ require(effects)
 require(car)
 library(emmeans)
 
+## VERY IMPORTANT!!!
+# in all the simulated data in this R scripts, it is assumed that each observation (i.e. each row)
+# comes from an independent subject. So if the data.frame has 100 rows, it is assumed that there are
+# 100 separate subjects.
+
 
 ## SIMPLE LINEAR REGRESSION ##
-Complexity = rnorm(100, mean = 80, sd = 10)
-Error = rnorm(100, mean=0, sd = 8)
-RT = 200 + 0.5*Complexity + Error
+Complexity = rnorm(100, mean = 80, sd = 80)
+Error = rnorm(100, mean=0, sd = 20)
+RT = 200 + 0.5 * Complexity + Error
 
 dat1 = data.frame(RT=RT, Complexity=Complexity)
 
 mod1 = lm(RT~Complexity, dat1)
+
 summary(mod1)
+
 #regression1
 png("Figures/lm_1.png", height=800, width=800, res=200)
-plot(allEffects(mod1))
+plot(allEffects(mod1, partial.residuals=T))
 dev.off()
+
+
+
+
 
 
 ##### plot scatterplot
@@ -39,17 +50,24 @@ with(dat1, segments(x0=Complexity, y0=fitted(mod1), x1=Complexity, y1=RT, col="d
 dev.off()
 
 ## MULTIPLE LINEAR REGRESSION ##
-Complexity = rnorm(100, mean = 80, sd = 10)
+Complexity = rnorm(100, mean = 8, sd = 10)
 Imageability = rnorm(100, mean = 20, sd = 5)
 Error = rnorm(100, mean=0, sd = 8)
 RT = 200 + 0.5*Complexity + -1.2*Imageability + Error
 dat2 = data.frame(RT=RT, Complexity=Complexity, Imageability=Imageability)
+
+#dat2$Complexity=scale(dat2$Complexity)
+#dat2$Imageability=scale(dat2$Imageability)
+
 mod2 = lm(RT~Complexity+Imageability, dat2)
+
 summary(mod2)
 
 png("Figures/lm_2.png", height=800, width=1600, res=200)
 plot(allEffects(mod2))
 dev.off()
+
+plot(dat2$RT, fitted(mod2))
 
 
 ## MULTIPLE LINEAR REGRESSION WITH FACTORS ##
@@ -59,10 +77,13 @@ PrimeType_dummy = model.matrix( ~ PrimeType )[,2]
 Imageability = rnorm(100, mean = 20, sd = 5)
 Error = rnorm(100, mean=0, sd = 8)
 RT = 200 + 5*PrimeType_dummy + -2*Imageability + Error
+
 dat3 = data.frame(RT = RT, PrimeType=PrimeType, Imageability = Imageability)
 
 mod3 = lm(RT~PrimeType+Imageability, dat3)
+
 summary(mod3)
+
 Anova(mod3, type="III")
 
 
@@ -122,7 +143,9 @@ dev.off()
 Anova(mod5, type="III")
 
 pairs(emmeans(mod5, ~PrimeType)) #misleading
-pairs(emmeans(mod5, ~PrimeType | Imageability)) 
+
+pairs(emmeans(mod5, ~PrimeType | Imageability))
+
 Imag_values= quantile(dat5$Imageability, probs = c(0.05, 0.5, 0.90))
 pairs(emmeans(mod5, ~PrimeType | Imageability, at = list(Imageability = Imag_values)))
 
