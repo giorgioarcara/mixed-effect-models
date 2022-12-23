@@ -26,7 +26,7 @@ set.seed(140)
 Cond_labels = c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature", "Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")
 
 # here the effect at population levels
-Cond_effs = c(0, +50, +80, +20, +70, +180)
+Cond_effs = c(0, +10, +20, +40, +80, +180)
 
 Cond_adj = data.frame(Cond_labels, Cond_effs)
 
@@ -34,7 +34,7 @@ Cond_adj = data.frame(Cond_labels, Cond_effs)
 Grand_Intercept = 1700
 
 # sigma
-mod_sigma = 50
+mod_sigma = 40
 
 Dep_name = "RT"
 
@@ -93,7 +93,7 @@ Subj_rInt_adj = Subj_adj[, c("Subj_ID", "Subj_rInt", "Age", "Age_adj", "TOM", "T
 # PART2 - ITEMS  ########
 #########################
 # Define parameters of Items, currently without Item-specific slopes
-Item_n = 10 # number of Total Items  (20 stim for condition)
+Item_n = 10 # number of Total Items.
 Item_sd = 80
 Item_ID = 1:Item_n
 Item_adj =  data.frame(Item_ID , 
@@ -119,7 +119,7 @@ dat_skeleton = expand.grid(Subj_ID = Subj_ID, Item_ID = Item_ID, Condition = Con
 # here I created all the possible combinations. However, depending from the experiment, this could make not sense.
 # for example, I want Item from 1:100 are associated to F11, while Item from 101:200 to F12
 # all Items are associated to F2.
-# to do this, I remove the non relevant combination here.
+# to do this, I remove the non relevant combination here (sorry, some pretty bad hard coding here).
 dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(1:5) & dat_skeleton$Condition%in%c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature")), ]
 dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(6:10) & dat_skeleton$Condition%in%c("Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")), ]
 
@@ -202,7 +202,7 @@ dat_skeleton[grep("Implicature", dat_skeleton$Condition), "StimType"]="Implicatu
 
 
 table(dat_skeleton$StimType, dat_skeleton$Condition)
-table(dat_skeleton$Difficulty, dat_skeleton$Condition)
+table(dat_skeleton$Group, dat_skeleton$Condition)
 
 dat = dat_skeleton[, c("Subj_ID", "Item_ID", "TOM", "Interpretability", "Age", "Group", "StimType", "Ntrial", "RT")]
 dat$Subj_ID=factor(dat$Subj_ID)
@@ -221,20 +221,40 @@ plot(allEffects(mod2))
 plot(effect(mod2, term="StimType*Interpretability"))
 
 
+### NOT GOOD !!! Use better way to generate a binomial model 
 dat_bin = dat
 dat_bin$ACC = NA
-for (iS in Subjects){
-  perc_low = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.40)
-  perc_up = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.60)
-  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"]<=perc_low] = 1
-  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"] > perc_up] = 0
-  dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"]), replace=T)
-}
+#for (iS in Subjects){
+#  perc_low = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.40)
+#  perc_up = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.60)
+#  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"]<=perc_low] = 1
+#  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"] > perc_up] = 0
+#  dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"]), replace=T)
+#}
+### NOTE with this data simulation, random intercept for Subjects become 0 because for all subjects
+# RT are split into high vs low, separately for each subject.
+# 
+# perc_low = quantile(dat_bin$RT, prob=0.40)
+# perc_up = quantile(dat_bin$RT, prob=0.60)
+# dat_bin$ACC[dat_bin$RT<=perc_low] = 1
+# dat_bin$ACC[dat_bin$RT>=perc_up] = 0
+# dat_bin[is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[is.na(dat_bin$ACC), "ACC"]), replace=T)
+z = scale(dat_bin$RT)
+pr = 1/(1+exp(-z)) 
+dat_bin$ACC = rbinom(length(z),1, pr)
+#https://stats.stackexchange.com/questions/46523/how-to-simulate-artificial-data-for-logistic-regression
+
+
 table(dat_bin$ACC, dat_bin$Subj_ID, useNA="ifany")
 
 
-mod2.glmer = glmer(ACC~StimType*Group+(1|Subj_ID)+(1|Item_ID), data=dat_bin, family="binomial")
+mod2.glmer = glmer(ACC~StimType*Group+TOM+Interpretability+Ntrial+(1|Subj_ID)+(1|Item_ID), data=dat_bin, family="binomial")
+summary(mod2.glmer)
 
+mod2.glmer_af = allFit(mod2.glmer)
+summary(mod2.glmer_af)
+
+check_model(mod2.glmer)
 
 save(dat_bin, file="data/example3bin_dat.RData")
 

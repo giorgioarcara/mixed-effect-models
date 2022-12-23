@@ -34,7 +34,9 @@ boxplot(RT~Subj_ID, dat)
 dev.off()
 
 png("Figures/ByItem_Boxplot.png", height=1600, width=3000, res=200)
-boxplot(RT~Item_ID, dat[dat$Item_ID<50,])
+dat_50 = dat[as.numeric(dat$Item_ID)<50,]
+dat_50$Item_ID = factor(dat_50$Item_ID) # re-factor to drop unused levels for visualization
+boxplot(RT~Item_ID, data = dat_50)
 dev.off()
 
 library(lme4)
