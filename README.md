@@ -6,4 +6,4 @@ In particular it contains:
 * slides on Mixed-Effect Models in R
 
 Slides and R project are meant to be used together.
-The slides uses mostly examples from Psycholinguistics but could be the starting point also for analysis in other fields.
+The course includes mostly examples from Psycholinguistics but could be easily adapted for analysis in other fields.
