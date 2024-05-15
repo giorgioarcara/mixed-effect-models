@@ -2,7 +2,7 @@ rm(list=ls())
 library(lmerTest)
 library(faux)
 library(effects)
-set.seed(140)
+set.seed(100)
 
 ##########################
 # SIMULATE MIXED MODEL DATA
@@ -23,28 +23,28 @@ set.seed(140)
 # here for example I have two factors F1 and F2 with two levels each 
 # so I put all the combinations in just one factor.
 
-Cond_labels = c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature", "Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")
+Cond_labels = c("Control_Irony", "Autism_Irony", "AutRelative_Irony", "Control_Literal", "Autism_Literal", "AutRelative_Literal")
 
 # here the effect at population levels
-Cond_effs = c(0, +10, +20, +40, +80, +180)
+Cond_effs = c(+80, +10, +50, +10, +05, +10)
 
 Cond_adj = data.frame(Cond_labels, Cond_effs)
 
 # other relevant value to define final formula
-Grand_Intercept = 1700
+Grand_Intercept = 2000
 
 # sigma
-mod_sigma = 40
+mod_sigma = 10
 
-Dep_name = "RT"
-
+Dep_name = "latent_var"
+# it is used here just to generate the data
 
 
 #########################
 # PART1 - SUBJECTS ######
 #########################
 # Define parameters of subjects, and subject-specific slopes
-Subj_n = 30 # number of subjects
+Subj_n = 50 # number of subjects
 
 Subj_ID = 1:Subj_n
 
@@ -59,7 +59,7 @@ Subj_adj = rnorm_multi(n=Subj_n, mu=0, r =vars_cor,
 
 # check that it worked
 cor(Subj_adj)
-hist(Subj_adj$Schizophrenics_Explicature)
+hist(Subj_adj$Autism_Irony)
 
 
 Subj_adj = cbind(Subj_ID, Subj_adj)
@@ -78,11 +78,11 @@ Subj_Cond_adj$Subj_rInt_adj = NULL # delete the column with Random Intercept, to
 
 
 ## add some variables to items (not interacting with anything)
-Subj_adj$Age = rnorm(Subj_n, mean = 60, sd = 10)
-Subj_adj$Age_adj = Subj_adj$Age * (-0.5)
+Subj_adj$Age = rnorm(Subj_n, mean = 10, sd = 5)
+Subj_adj$Age_adj = Subj_adj$Age * (-0.2) + Subj_adj$Age^2 * (-5)
 
-Subj_adj$TOM = rnorm(Subj_n, mean = 3, sd = 1.5)
-Subj_adj$TOM_adj = Subj_adj$TOM * 30
+Subj_adj$TOM = rnorm(Subj_n, mean = 30,  sd = 1.5)
+Subj_adj$TOM_adj = Subj_adj$TOM * -6
 
 
 # get random intercept here
@@ -94,18 +94,15 @@ Subj_rInt_adj = Subj_adj[, c("Subj_ID", "Subj_rInt", "Age", "Age_adj", "TOM", "T
 #########################
 # Define parameters of Items, currently without Item-specific slopes
 Item_n = 10 # number of Total Items.
-Item_sd = 80
+Item_sd = 20
 Item_ID = 1:Item_n
 Item_adj =  data.frame(Item_ID , 
                             Item_rInt = rnorm(Item_n, mean=0, sd=Item_sd)
 )
 
 
-## simulate two moderate correlated variabls 
-Item_adj$Interpretability = rnorm(Item_n, mean=10, sd = 3)
-Item_adj$Interpretability_adj = Item_adj$Interpretability* -3
-Item_adj$Interpretability_adj[6:10] = Item_adj$Interpretability[6:10]*-60
-# note that I choose these items cause few lines below I will define these are items for Proverbs (easy and hard)
+Item_adj$Length = rnorm(Item_n, mean=10, sd = 3)
+Item_adj$Length_adj = Item_adj$Length * -0.5
 
 
 
@@ -120,12 +117,12 @@ dat_skeleton = expand.grid(Subj_ID = Subj_ID, Item_ID = Item_ID, Condition = Con
 # for example, I want Item from 1:100 are associated to F11, while Item from 101:200 to F12
 # all Items are associated to F2.
 # to do this, I remove the non relevant combination here (sorry, some pretty bad hard coding here).
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(1:5) & dat_skeleton$Condition%in%c("Controls_Explicature", "Schizophrenics_Explicature", "Alzheimer_Explicature")), ]
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(6:10) & dat_skeleton$Condition%in%c("Controls_Implicature", "Schizophrenics_Implicature", "Alzheimer_Implicature")), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(1:5) & dat_skeleton$Condition%in%c("Control_Irony", "Autism_Irony", "AutRelative_Irony")), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Item_ID%in%c(6:10) & dat_skeleton$Condition%in%c("Control_Literal", "Autism_Literal", "AutRelative_Literal")), ]
 
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(1:10) & dat_skeleton$Condition%in%c("Schizophrenics_Explicature", "Alzheimer_Explicature","Schizophrenics_Implicature", "Alzheimer_Implicature" )), ]
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(11:20) & dat_skeleton$Condition%in%c("Controls_Explicature", "Alzheimer_Explicature","Controls_Implicature", "Alzheimer_Implicature" )), ]
-dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(21:30) & dat_skeleton$Condition%in%c("Controls_Explicature", "Schizophrenics_Explicature","Controls_Implicature", "Schizophrenics_Implicature" )), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(1:10) & dat_skeleton$Condition%in%c("Autism_Irony", "AutRelative_Irony","Autism_Literal", "AutRelative_Literal" )), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(11:20) & dat_skeleton$Condition%in%c("Control_Irony", "AutRelative_Irony","Control_Literal", "AutRelative_Literal" )), ]
+dat_skeleton  = dat_skeleton[!(dat_skeleton$Subj_ID%in%c(21:30) & dat_skeleton$Condition%in%c("Control_Irony", "Autism_Irony","Control_Literal", "Autism_Literal" )), ]
 
 
 table(dat_skeleton$Item_ID, dat_skeleton$Subj_ID)
@@ -168,21 +165,29 @@ dat_skeleton$Ntrial_adj = 0.0005*dat_skeleton$Ntrial
 # ADD DEPENDENT VARIABLE (combining everything)
 dat_skeleton[, Dep_name] = apply(dat_skeleton[, c("Grand_Intercept", "Cond_effs", "Subj_rInt",
                                                   "SubjCond_adj", "Item_rInt", 
-                                                  "TOM_adj", "Age_adj", "Interpretability_adj", "Ntrial_adj",
+                                                  "TOM_adj", "Age_adj", "Length_adj", "Ntrial_adj",
                                                   "Error")], 1, sum)
 head(dat_skeleton)
 
-hist(dat_skeleton$RT)
+hist(dat_skeleton$latent_var)
 
-mod1 = lmer(RT~Condition+Interpretability+TOM+Age+Ntrial+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+
+plot(dat_skeleton$Length, dat_skeleton$latent_var)
+
+mod1 = lmer(latent_var~Condition+Length+TOM+Age+Ntrial+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+plot(effect("Length", mod1, partial.residuals=T))
+
 library(car)
 vif(mod1)
 plot(allEffects(mod1))
 summary(mod1)
 
-mod2 = lmer(RT~Condition*Interpretability+TOM+Age+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+mod2 = lmer(latent_var~Condition+Length+I(Length^2)+TOM+Age+(1|Subj_ID) + (1|Item_ID), data=dat_skeleton)
 
 summary(mod2)
+plot(allEffects(mod2))
+plot(effect("Condition", mod2))
+
 
 
 
@@ -192,70 +197,100 @@ summary(mod2)
 
 # createa dataset 
 dat_skeleton$Group=NA
-dat_skeleton[grep("Controls", dat_skeleton$Condition), "Group"]="Controls"
-dat_skeleton[grep("Schizophrenics", dat_skeleton$Condition), "Group"]="Schizophrenics"
-dat_skeleton[grep("Alzheimer", dat_skeleton$Condition), "Group"]="Alzheimer"
+dat_skeleton[grep("Control", dat_skeleton$Condition), "Group"]="Control"
+dat_skeleton[grep("Autism", dat_skeleton$Condition), "Group"]="Autism"
+dat_skeleton[grep("AutRelative", dat_skeleton$Condition), "Group"]="AutRelative"
 
 dat_skeleton$StimType=NA
-dat_skeleton[grep("Explicature", dat_skeleton$Condition), "StimType"]="Explicature"
-dat_skeleton[grep("Implicature", dat_skeleton$Condition), "StimType"]="Implicature"
+dat_skeleton[grep("Irony", dat_skeleton$Condition), "StimType"]="Irony"
+dat_skeleton[grep("Literal", dat_skeleton$Condition), "StimType"]="Literal"
 
 
 table(dat_skeleton$StimType, dat_skeleton$Condition)
 table(dat_skeleton$Group, dat_skeleton$Condition)
 
-dat = dat_skeleton[, c("Subj_ID", "Item_ID", "TOM", "Interpretability", "Age", "Group", "StimType", "Ntrial", "RT")]
+dat = dat_skeleton[, c("Subj_ID", "Item_ID", "TOM", "Length", "Age", "Group", "StimType", "Ntrial", "latent_var")]
 dat$Subj_ID=factor(dat$Subj_ID)
 dat$Item_ID=factor(dat$Item_ID)
 dat$StimType = factor(dat$StimType)
 dat$Group = factor(dat$Group)
 
-save(dat, file="data/example3_dat.RData")
 
-
-
-mod2 = lmer(RT~StimType*Group+ StimType*Interpretability+TOM+Age+(1+StimType*Group|Subj_ID) + (1|Item_ID), data=dat)
+mod2 = lmer(latent_var~StimType*Group+ StimType*Length+TOM+Age+(1+StimType*Group|Subj_ID) + (1|Item_ID), data=dat)
 summary(mod2)
 
 plot(allEffects(mod2))
-plot(effect(mod2, term="StimType*Interpretability"))
+plot(effect(mod2, term="StimType*Length"))
 
 
-### NOT GOOD !!! Use better way to generate a binomial model 
-dat_bin = dat
-dat_bin$ACC = NA
-#for (iS in Subjects){
-#  perc_low = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.40)
-#  perc_up = quantile(dat_bin[dat_bin$Subj_ID==iS, "RT"], prob=0.60)
-#  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"]<=perc_low] = 1
-#  dat_bin[dat_bin$Subj_ID==iS, "ACC"][dat_bin[dat_bin$Subj_ID==iS, "RT"] > perc_up] = 0
-#  dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[dat_bin$Subj_ID==iS&is.na(dat_bin$ACC), "ACC"]), replace=T)
-#}
-### NOTE with this data simulation, random intercept for Subjects become 0 because for all subjects
-# RT are split into high vs low, separately for each subject.
-# 
-# perc_low = quantile(dat_bin$RT, prob=0.40)
-# perc_up = quantile(dat_bin$RT, prob=0.60)
-# dat_bin$ACC[dat_bin$RT<=perc_low] = 1
-# dat_bin$ACC[dat_bin$RT>=perc_up] = 0
-# dat_bin[is.na(dat_bin$ACC), "ACC"] = sample(c(0,1), length(dat_bin[is.na(dat_bin$ACC), "ACC"]), replace=T)
-z = scale(dat_bin$RT)
-pr = 1/(1+exp(-z)) 
-dat_bin$ACC = rbinom(length(z),1, pr)
-#https://stats.stackexchange.com/questions/46523/how-to-simulate-artificial-data-for-logistic-regression
+dat_ord = dat
+dat_ord$rating = NA
+curr_size = dim(dat_ord)[1]/5 # cause I'm determining for levels of latent variable
+dat_ord$rating[dat_ord$latent_var > quantile(dat_ord$latent_var, prob=0.8)] = sample(1:5, size =  curr_size, prob=c(0,0.1, 0.1, 0.3, 0.6), replace=T)
+dat_ord$rating[dat_ord$latent_var <= quantile(dat_ord$latent_var, prob=0.8)] = sample(1:5, size =  curr_size, prob=c(0.05,0.05, 0.2, 0.5, 0.2), replace=T)
+dat_ord$rating[dat_ord$latent_var <= quantile(dat_ord$latent_var, prob=0.6)] = sample(1:5, size =  curr_size, prob=c(0.1,0.1, 0.5, 0.1, 0.1), replace=T)
+dat_ord$rating[dat_ord$latent_var <= quantile(dat_ord$latent_var, prob=0.4)] = sample(1:5, size =  curr_size, prob=c(0.2,0.5, 0.2, 0.05, 0.05), replace=T)
+dat_ord$rating[dat_ord$latent_var <= quantile(dat_ord$latent_var, prob=0.2)] = sample(1:5, size =  curr_size, prob=c(0.5,0.3, 0.1, 0.05, 0.05), replace=T)
+
+table(dat_ord$rating)
+dat_ord$latent_var = NULL
+dat_ord$ACC = NULL
+dat_ord$rating = ordered(dat_ord$rating) # for analysis with ordinal
+
+save(dat_ord, file="data/example4_dat.RData")
 
 
-table(dat_bin$ACC, dat_bin$Subj_ID, useNA="ifany")
+library(ordinal)
+mod_ord = clmm(rating~StimType*Group+ Length+TOM+Age+(1|Subj_ID) + (1|Item_ID), data=dat_ord, link="probit")
+summary(mod_ord)
+
+mod_ord = clmm2(rating~StimType,  random = Subj_ID,   nominal = ~Length, data=dat_ord, Hess=TRUE)
+summary(mod_ord)
+
+library(mgcv)
+dat_skeleton$Item_ID=factor(dat_skeleton$Item_ID)
+dat_skeleton$Subj_ID=factor(dat_skeleton$Subj_ID)
+
+dat_ord$rating_num = as.numeric(dat_ord$rating)
+mod_ord2 = gam(rating_num~StimType*Group + TOM + s(Age) + Length + Ntrial + s(Subj_ID, bs="re") + s(Item_ID, bs="re") , family=ocat(R=5), data=dat_ord)
+summary(mod_ord2)
 
 
-mod2.glmer = glmer(ACC~StimType*Group+TOM+Interpretability+Ntrial+(1|Subj_ID)+(1|Item_ID), data=dat_bin, family="binomial")
-summary(mod2.glmer)
+mod_ord_s = gam(latent_var~StimType*Group + TOM + s(Age) + Length + Ntrial + s(Subj_ID, bs="re") + s(Item_ID, bs="re") , data=dat_skeleton)
 
-mod2.glmer_af = allFit(mod2.glmer)
-summary(mod2.glmer_af)
+plot(mod_ord_s)
 
-check_model(mod2.glmer)
+library(gratia)
+p1 <- draw(mod_ord_s, select = "TOM")
 
-save(dat_bin, file="data/example3bin_dat.RData")
 
+?anova(mod_ord2)
+
+#plot(mod_ord2, all.terms=TRUE)
+
+library(DHARMa)
+simOut = simulateResiduals(fittedModel = mod_ord_s)
+plot(simOut)
+plotResiduals(simOut, dat$TOM)
+plotResiduals(simOut, dat$Length)
+plotResiduals(simOut, dat$Age)
+plotResiduals(simOut, dat$StimType)
+plotResiduals(simOut, dat$Group)
+plotResiduals(simOut, dat$Ntrial)
+plotResiduals(simOut, dat$Subj_ID)
+plotResiduals(simOut, dat$Item_ID)
+
+
+
+plot(mod_ord2, resid=T)
+
+
+plot(mod_ord2, select=1)  # Plot the first smooth term
+gam.check(mod_ord2)
+
+library(itsadug)
+
+check_resid(mod_ord_s)
+
+# https://cran.r-project.org/web/packages/gratia/vignettes/custom-plotting.html
 

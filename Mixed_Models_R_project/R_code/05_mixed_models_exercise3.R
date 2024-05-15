@@ -35,6 +35,8 @@ library(lmerTest)
 library(car)
 library(languageR)
 library(performance)
+library(effects)
+library(DHARMa)
 
 
 str(dat_bin)
@@ -68,16 +70,36 @@ mod1c_af = allFit(mod1c)
 summary(mod1c_af)
 # results are very similar across Optimizers, so results are good enough
 
-# the final need check is on assumptions (see p. 110 and 11 of my slides updated at 23/12/2022)
-check_model(mod1c)
-binned_residuals(mod1c)
-# both checks shows a very reasonable fulfillment of assumptions
-
-# residuals are good. I use Anova for checking significant terms
 Anova(mod1c, type="III")
 
 plot(allEffects(mod1c))
 
+#NOTE: performance package is causing many problems with R 4.3.1 (update of 30/04/2024). I will use only Dharma.
+# check_model(mod1c)
+# the final need check is on assumptions (see p. 110 and 11 of my slides updated at 23/12/2022)
+plot(check_collinearity(mod1c))
+plot(check_outliers(mod1c))
+plot(binned_residuals(mod1c))
+plot((mod1c))
 
 
+simulationOutput <- simulateResiduals(fittedModel = mod1c, plot = F)
+plot(simulationOutput)
+
+plotResiduals(simulationOutput, quantreg = F)
+
+# check overdispersion
+testOverdispersion(simulationOutput)
+testZeroInflation(simulationOutput)
+
+# check residuals against precictors and random variables
+plotResiduals(simulationOutput, dat_bin$TOM)
+plotResiduals(simulationOutput, dat_bin$Interpretability)
+plotResiduals(simulationOutput, dat_bin$Age)
+plotResiduals(simulationOutput, dat_bin$Ntrial)
+plotResiduals(simulationOutput, dat_bin$Group)
+plotResiduals(simulationOutput, dat_bin$StimType)
+plotResiduals(simulationOutput, dat_bin$Subj_ID)
+
+plot(allEffects(mod1c, partial.residuals=T))
 

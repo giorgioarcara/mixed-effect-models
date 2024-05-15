@@ -20,7 +20,7 @@ rm(list=ls())
 library(lmerTest)
 library(effects)
 library(car)
-library(itsadug)
+#library(itsadug)
 
 load("data/example1_dat.RData")
 
@@ -113,6 +113,14 @@ dev.off()
 Anova(dat.lmer1) # to inspect significance of terms
 pairs(emmeans(dat.lmer1, ~StimType*PrimeType)) # for post-hocs
 # As there is no interaction with linear terms there is no need to post-hoc for marginal effects.
+
+# in the example below I use the model including interactions to explore difference with difference value of covariate
+# if there was you can check for different values (here I use few quantiles)
+pairs(emmeans(dat.lmer3, ~StimType, at=list(Imageability=quantile(dat$Imageability, prob=0.25)) )) # 
+pairs(emmeans(dat.lmer3, ~StimType, at=list(Imageability=quantile(dat$Imageability, prob=0.75)) )) # 
+
+
+
 
 # here a plot of all marginal effects
 plot(allEffects(dat.lmer1))

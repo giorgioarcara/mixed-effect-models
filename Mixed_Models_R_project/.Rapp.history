@@ -1,0 +1,18 @@
+setwd("/Users/giorgioarcara/Documents/Lavori Personali/Mixed Models Course/Mixed Effects Models/mixed-effect-models/Mixed_Models_R_project")
+library(DHARMa)
+library(DHARMa)
+library(DHARMa)
+library(DHARMa)
+library(DHARMa)
+library(DHARMa)
+library(DHARMa)
+rm(list=ls())#
+setwd("/Users/giorgioarcara/Documents/Lavori Personali/Mixed Models Course/Mixed Effects Models/mixed-effect-models/Mixed_Models_R_project")#
+library(DHARMa)library(lme4)library(effects)library(performance)# Create Data is a useful function to create syntetic data with known problemsset.seed(100)testData1 = createData(sampleSize = 200,  family = poisson())# by default we have a linear varsiable (Environment) a random grouping variable (Group)-# so you should interpret group as the number of participantshead(testData1)hist(testData1$observedResponse)fittedModel1 <- glm(observedResponse ~  Environment1 , family = "poisson", data = testData1)
+check_model(fittedModel1)
+check_normality(fittedModel1)
+check_collinearity(fittedModel1)
+> fittedModel1 <- glm(observedResponse ~  Environment1 , family = "poisson", data = testData1)
+> fittedModel1 <- glm(observedResponse ~  Environment1 , family = "poisson", data = testData1)
+fittedModel1 <- glm(observedResponse ~  Environment1 , family = "poisson", data = testData1)
+check_normality(fittedModel1)
