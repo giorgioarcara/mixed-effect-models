@@ -76,7 +76,7 @@ xyplot(pred + low + upp ~ Environment1, data = eff_plot,
 
 
 
-#install.packages("glmTBB")
+#install.packages("glmTMB")
 # not working
 #https://github.com/glmmTMB/glmmTMB/issues/883
 

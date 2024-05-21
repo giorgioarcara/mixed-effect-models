@@ -57,7 +57,7 @@ vif(dat.lmer0)
 #  multicollinearity (as expected) is an issue here as vif > 10 for some variables. We decide to drop concretness and use only Imageability. 
 # we will consider this in the interpretation of the results.
 # moreveor there were some issues in model convergence, maybe the random structure is too complex.
- d# Now fit only a model with Imageability, contrasting two possible random structure
+# Now fit only a model with Imageability, contrasting two possible random structure
  
 dat.lmer1 = lmer(RT~StimType*PrimeType + Imageability + Complexity + (1+StimType*PrimeType|Subj_ID) + (1|Item_ID), data=dat)
 dat.lmer2 = lmer(RT~StimType*PrimeType + Imageability + Complexity + (1+StimType|Subj_ID) + (1|Item_ID), data=dat)
@@ -109,10 +109,15 @@ dev.off()
 ########
 # as the model seems solid, I can make some additional steps, like post hocs or figures
 ####
+library(emmeans)
 
 Anova(dat.lmer1) # to inspect significance of terms
 pairs(emmeans(dat.lmer1, ~StimType*PrimeType)) # for post-hocs
 # As there is no interaction with linear terms there is no need to post-hoc for marginal effects.
+
+plot(effect(dat.lmer1, term="StimType*PrimeType"))
+plot(effect(dat.lmer1, term="StimType*Imageability"))
+
 
 # in the example below I use the model including interactions to explore difference with difference value of covariate
 # if there was you can check for different values (here I use few quantiles)

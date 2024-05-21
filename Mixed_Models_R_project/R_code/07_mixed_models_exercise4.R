@@ -42,7 +42,7 @@ summary(mod_ord1)
 
 # neither predict or residuals are available
 #predict(mod_ord1)
-#residuals(mod_ord1)
+# residuals(mod_ord1)
 
 # for model selection you could use AIC
 AIC(mod_ord1)
@@ -105,7 +105,7 @@ cuts = 2:5
 mod_bin1 <- gam(rating>=2~StimType*Group + TOM + Age + s(Subj_ID, bs="re") + s(Item_ID, bs="re"), data = dat_ord, family="binomial")
 
 
-p <- dim(summary(mod_bin1)$coef)[1]-1 # length of coefficients (except Intercept)
+p <- length(summary(mod_bin1)$p.coef)-1 # length of coefficients (except Intercept)
 Coef <- matrix(NA, ncol=p, nrow=ncut,
                dimnames=list(paste('>=', levels(y)[-1],sep=''),
                              NULL))
