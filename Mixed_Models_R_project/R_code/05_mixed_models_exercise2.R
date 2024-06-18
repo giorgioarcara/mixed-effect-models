@@ -22,6 +22,7 @@ load("data/example2_dat.RData")
 library(lme4)
 library(lmerTest)
 library(car)
+library(emmeans)
 
 str(dat)
 head(dat)
@@ -42,20 +43,33 @@ table(dat$Subj_ID, dat$StimType, dat$Difficulty)
 
 hist(dat$RT)
 
-vif(mod1)
 
 mod1 = lmer(RT~StimType*Difficulty + Interpretability + Concreteness + NumberOfLetters + (1 + StimType*Difficulty | Subj_ID) + (1 | Item_ID), data=dat)
 mod2 = lmer(RT~StimType*Difficulty + Interpretability + Concreteness + NumberOfLetters + (0+Interpretability | Subj_ID) + (0+Concreteness| Subj_ID) + (0+NumberOfLetters|Subj_ID) + (1 + StimType*Difficulty | Subj_ID) + (1 | Item_ID), data=dat)
 
+vif(mod1)
+vif(mod2)
+
 anova(mod1, mod2)
 
-mod3 = lmer(RT~StimType*Difficulty + StimType*Interpretability + Concreteness + NumberOfLetters + (1 + StimType * Difficulty | Subj_ID) + (1 + StimType*Interpretability | Subj_ID) + (1 + StimType | Item_ID), data=dat)
+mod3 = lmer(RT~StimType*Difficulty + StimType*Interpretability + Concreteness + NumberOfLetters + (1 + StimType * Difficulty | Subj_ID) +  (1 + StimType | Item_ID), data=dat)
 
 Anova(mod3)
 AIC(mod1)
 AIC(mod3)
 
-# in the end, don't forget to check the assumptions
+
+# post-hoc
+plot(effect("StimType*Difficulty", mod3))
+pairs(emmeans(mod3, ~StimType*Difficulty))
+
+plot(effect("StimType*Interpretability", mod3))
+pairs(emtrends(mod3, ~StimType, var="Interpretability"))
+
+
+
+
+# in the end, don't forget to check the assumptions! (see also other examples)
 
 
 

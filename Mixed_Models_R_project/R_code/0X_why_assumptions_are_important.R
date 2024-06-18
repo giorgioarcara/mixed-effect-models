@@ -26,6 +26,11 @@ plot(check_heteroscedasticity(mod))
 
 plot(allEffects(mod, partial.residuals=TRUE))
 
+png("Figures/partial_residuals.png", height=800, width=800, res=150)
+plot(allEffects(mod, partial.residuals=TRUE))
+dev.off()
+
+
 simulationOutput <- simulateResiduals(fittedModel = mod)
 plot(simulationOutput)
 testOverdispersion(simulationOutput)

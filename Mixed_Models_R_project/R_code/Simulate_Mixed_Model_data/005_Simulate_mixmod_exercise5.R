@@ -3,7 +3,7 @@ library(lmerTest)
 library(car)
 library(faux)
 library(effects)
-set.seed(120)
+set.seed(150)
 
 ##########################
 # SIMULATE MIXED MODEL DATA
@@ -34,7 +34,7 @@ Cond_effs = c(0, +30, +70, +30, +70, +120)
 Cond_adj = data.frame(Cond_labels, Cond_effs)
 
 # other relevant value to define final formula
-Grand_Intercept = 2000
+Grand_Intercept = 10000
 
 # sigma
 mod_sigma = 20
@@ -99,14 +99,13 @@ Item_adj =  data.frame(Item_ID ,
 Item_adj$NumberOfLetters = rnorm(Item_n, mean = 10, sd = 1)
 Item_adj$NumberOfLetters_adj = Item_adj$NumberOfLetters * 0.5
 
-Item_adj$Concreteness = rnorm(Item_n, mean = 3, sd = 2)
+Item_adj$Concreteness = rnorm(Item_n, mean = 3, sd = 2) + 5 # (+5 is to avoid values below 0)
 Item_adj$Concreteness_adj = -Item_adj$Concreteness * 3
 ## add interaction with one variable
 
-## simulate two moderate correlated variabls 
-Item_adj$Interpretability = Item_adj$Concreteness + rnorm(length( Item_adj$Concreteness), mean=0, sd = 3)
-cor(Item_adj$Concreteness, Item_adj$Interpretability)
-Item_adj$Interpretability_adj =  +Item_adj$Interpretability* 20 + -Item_adj$Interpretability^2* 10
+## simulate  non-linear term
+Item_adj$Interpretability = rnorm(Item_n, mean = 0, sd = 3) + 5
+Item_adj$Interpretability_adj =  +Item_adj$Interpretability * 10 + -Item_adj$Interpretability ^2* 50
 
 
 ####################################
@@ -204,7 +203,7 @@ dat = dat_skeleton[, c("Subj_ID", "Item_ID", "Concreteness", "Interpretability",
 save(dat, file="data/example5_dat.RData")
 
 
-mod2 = lmer(RT~StimType*Difficulty+ StimType*Interpretability+Concreteness+NumberOfLetters+(1+StimType*Difficulty|Subj_ID) + (1|Item_ID), data=dat_skeleton)
+mod2 = lmer(RT~StimType*Difficulty+ StimType*Interpretability+Concreteness+NumberOfLetters+(1+StimType|Subj_ID) + (1|Item_ID), data=dat_skeleton)
 plot(allEffects(mod2))
 plot(effect(mod2, term="StimType*Interpretability"))
 
