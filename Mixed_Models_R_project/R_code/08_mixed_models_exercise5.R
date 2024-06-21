@@ -47,73 +47,94 @@ hist(dat$RT)
 
 dat$log_RT = log(dat$RT)
 
-
+# model with random slope
 mod1 = lmer(RT~StimType*Difficulty + Interpretability + Concreteness + NumberOfLetters + (1 + StimType | Subj_ID) + (1 | Item_ID), data=dat)
-mod2 = lmer(RT~StimType*Difficulty + Interpretability + Concreteness + NumberOfLetters + (1 | Subj_ID)  + (1 | Item_ID), data=dat)
 
+# check assumptions
 vif(mod1)
-vif(mod2)
-
-anova(mod1, mod2)
-
-AIC(mod1)
-AIC(mod2)
-
-plot(allEffects(mod2, partial.residuals=T))
-# in the end, don't forget to check the assumptions
+plot(check_normality(mod1))
 plot(check_normality(mod1, type="qq"))
+# partial residuals (fundamental for nonlinearities)
+plot(allEffects(mod2, partial.residuals=T))
 
-plot(fitted(mod2), resid(mod2))
-
-# fit non linearity
+# a non linearity seems present, check several ways to fit it.
 
 # with I() function
 mod1a = lmer(RT~StimType*Difficulty + Interpretability + I(Interpretability^2) + Concreteness + NumberOfLetters + (1 + StimType | Subj_ID) + (1 | Item_ID), data=dat)
-
+summary(mod1a)
+plot(check_normality(mod1a))
+plot(check_normality(mod1a, type="qq"))
+# partial residuals (fundamental for nonlinearities)
 plot(allEffects(mod1a, partial.residuals=T))
+
+# for simplicity in the next checks I don't include also diagnostic checks.
+
+# check with power of 3
+mod1a2 = lmer(RT~StimType*Difficulty + Interpretability + I(Interpretability^2) + I(Interpretability^3) + Concreteness + NumberOfLetters + (1 + StimType | Subj_ID) + (1 | Item_ID), data=dat)
 
 # with poly()
 mod1b = lmer(RT~StimType*Difficulty + poly(Interpretability,2) + Concreteness + NumberOfLetters + (1 + StimType | Subj_ID) + (1 | Item_ID), data=dat)
+summary(mod1b)
 
 plot(allEffects(mod1b, partial.residuals=T))
 
-
 # with rcs()
-library(rms)
+library(rms) # rcs() is inside rms package
 mod1c = lmer(RT~StimType*Difficulty + rcs(Interpretability) + Concreteness + NumberOfLetters + (1 + StimType | Subj_ID) + (1 | Item_ID), data=dat)
 
 plot(allEffects(mod1c, partial.residuals=T))
 
-summary(mod1c)
+# compare AIC of all models
+AIC(mod1, mod1a, mod1a2, mod1b, mod1c)
 
+# mod1c seems the best (using AIC)
 
 ## FIT GAM MODEL ###
 
-
 library(mgcv)
 
-mod3 = gam(RT~StimType*Difficulty + s(Interpretability) + s(Concreteness) + NumberOfLetters + s(Item_ID, bs="re") + s(Subj_ID, bs="re"), data=dat)
-summary(mod3)
+# model with smooth term for Interpretability, smooth term for Concreteness and two random smooth for Item and Subject
+mod2 = gam(RT ~ StimType*Difficulty + s(Interpretability) + s(Concreteness) + NumberOfLetters + s(Item_ID, bs="re") + s(Subj_ID, StimType, bs="re"), data=dat)
+summary(mod2)
 
-AIC(mod3)
+AIC(mod2)
 AIC(mod1)
 
-# note the 
-library(DHARMa)
-simOut3 = simulateResiduals(mod3)
-plot(simOut3)
-plotResiduals(simOut3, dat$Concreteness)
-plotResiduals(simOut3, dat$StimType)
-plotResiduals(simOut3, dat$Difficulty)
-plotResiduals(simOut3, dat$NumberOfLetters)
+plot(mod2)
+
+## check if simpler model are more adequate using a model comparison approach
+# remove random smooth for concreteness
+mod2a = gam(RT ~ StimType*Difficulty + s(Interpretability) + Concreteness + NumberOfLetters + s(Item_ID, bs="re") + s(Subj_ID, StimType, bs="re"), data=dat)
+
+
+AIC(mod2, mod2a)
+# note they are identical cause GAM guessed a linear effect of Concretness (edf = 1)
+
+AIC(mod2, mod1)
+
+# be careful, don't make your choice only in AIC, also check diagnostics (in this case partial residuals of effects)
+summary(mod2)
+plot(mod2)
+
+# diagnostics
+par(mfrow(c(2,2)))
+gam.check(mod2)
+
+# 
+library(itsadug)
+plot_smooth(mod2, view = "Interpretability")
+
+# to have some hints about the need of adding non linear terms, you can plot raw data (dependent variable againts predictor)
+plot(dat$Interpretability, dat$RT)
+plot(dat$Concreteness, dat$RT)
 
 
 library(DHARMa)
-simOut1 = simulateResiduals(mod1)
-plot(simOut1)
-plotResiduals(simOut1, dat$Concreteness)
-plotResiduals(simOut1, dat$Interpretability)
-plotResiduals(simOut1, dat$StimType)
-plotResiduals(simOut1, dat$Difficulty)
+simOut2 = simulateResiduals(mod2)
+plot(simOut2)
+plotResiduals(simOut2, dat$Concreteness)
+plotResiduals(simOut2, dat$Interpretability)
+plotResiduals(simOut2, dat$StimType)
+plotResiduals(simOut2, dat$Difficulty)
 
 

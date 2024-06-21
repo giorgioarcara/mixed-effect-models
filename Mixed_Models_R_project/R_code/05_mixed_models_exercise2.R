@@ -67,8 +67,6 @@ plot(effect("StimType*Interpretability", mod3))
 pairs(emtrends(mod3, ~StimType, var="Interpretability"))
 
 
-
-
 # in the end, don't forget to check the assumptions! (see also other examples)
 
 
