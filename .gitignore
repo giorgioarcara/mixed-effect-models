@@ -1,6 +1,31 @@
+#/Mixed_Models_R_project/R_code/Simulate_Mixed_Model_data/*
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 .DS_Store
-#/Mixed_Models_R_project/R_code/Simulate_Mixed_Model_data/*
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon files
+Icon?
+._*
+
+# Thumbnails
+._.DS_Store
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+
+# Directories potentially created on network or local volumes
+.DfStore
+.DfFseventsd
+
+# Temporary files
+.fseventsd
+
