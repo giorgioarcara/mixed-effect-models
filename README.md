@@ -12,3 +12,9 @@ Author: Giorgio Arcara
 Contacts: giorgio.arcara@gmail.com
 
 
+
+## License
+
+The code in `Mixed_Models_R_project/` is released under the [MIT License](LICENSE).
+The slides (`Mixed_effects_models.pdf`) are licensed under
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
